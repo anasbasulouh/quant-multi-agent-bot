@@ -98,4 +98,55 @@ async def run_agents():
                 trade["exit_time"] = datetime.now().strftime("%H:%M:%S")
                 
                 state["closed_trades"].insert(0, trade)
-                state["realized_pnl"] = round(state["realized_pnl"], 2)
+                state["realized_pnl"] = round(state["realized_pnl"] + pnl, 2)
+                state["balance"] = round(25000 + state["realized_pnl"], 2)
+                state["available"] = state["balance"]
+                state["equity"] = state["balance"]
+                state["total_trades"] += 1
+                
+                if pnl > 0:
+                    state["wins"] += 1
+                    add_log("EXIT", trade["pair"], f"تحقيق هدف | ربح {pnl} ر.س", "green")
+                else:
+                    state["losses"] += 1
+                    add_log("EXIT", trade["pair"], f"وقف خسارة | خسارة {pnl} ر.س", "red")
+                
+                if state["total_trades"] > 0:
+                    state["win_rate"] = round((state["wins"] / state["total_trades"]) * 100, 1)
+                
+                state["agents_status"]["Executor"] = "نشط"
+
+        await asyncio.sleep(8)  # كل 8 ثواني دورة
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(run_agents())
+
+@app.get("/", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "state": state
+    })
+
+@app.post("/start")
+async def start_bot():
+    state["is_running"] = True
+    state["start_time"] = datetime.now().strftime("%H:%M:%S")
+    state["agents_status"]["Executor"] = "LIVE"
+    add_log("SYSTEM", "SYSTEM", "تم تشغيل المحرك التجريبي", "blue")
+    return {"status": "started"}
+
+@app.post("/stop")
+async def stop_bot():
+    state["is_running"] = False
+    state["agents_status"]["Executor"] = "متوقف"
+    add_log("SYSTEM", "SYSTEM", "تم إيقاف المحرك", "orange")
+    return {"status": "stopped"}
+
+@app.get("/api/state")
+async def get_state():
+    return state
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=10000, reload=True)
