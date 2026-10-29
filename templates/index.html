@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوت التداول الكمي - Multi Agent</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        body {
+            background: #0a0e17;
+            color: #e0e6ed;
+            min-height: 100vh;
+            padding: 12px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #111827;
+            padding: 14px 18px;
+            border-radius: 14px;
+            margin-bottom: 14px;
+            border: 1px solid #1f2937;
+        }
+        
+        .logo {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .balance {
+            font-size: 22px;
+            font-weight: 700;
+            color: #34d399;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #064e3b;
+            color: #34d399;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+        
+        .status.offline {
+            background: #3f1f1f;
+            color: #f87171;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: 280px 1fr 300px;
+            }
+        }
+        
+        .card {
+            background: #111827;
+            border-radius: 14px;
+            padding: 16px;
+            border: 1px solid #1f2937;
+        }
+        
+        .card-title {
+            font-size: 14px;
+            color: #9ca3af;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .agents {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .agent {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: #0f172a;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        
+        .agent.live {
+            border: 1px solid #3b82f6;
+            background: #172554;
+        }
+        
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #34d399;
+        }
+        
+        .dot.red { background: #f87171; }
+        .dot.blue { background: #3b82f6; }
+        
+        .pair-price {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 8px 0;
+        }
+        
+        .positive { color: #34d399; }
+        .negative { color: #f87171; }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.2s;
+        }
+        
+        .btn-start {
