@@ -143,3 +143,198 @@
         }
         
         .btn-start {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .btn-stop {
+            background: #dc2626;
+            color: white;
+        }
+        
+        .log-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #1f2937;
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .log-time {
+            color: #6b7280;
+            font-size: 11px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        
+        .stat-box {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+        
+        .emergency {
+            background: #450a0a;
+            color: #fca5a5;
+            border: 1px solid #7f1d1d;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <span>◆</span> بوت التداول الكمي
+        </div>
+        <div class="balance" id="balance">{{ "%.2f"|format(state.balance) }} ر.س</div>
+        <div class="status" id="status">
+            <div class="dot"></div>
+            <span id="status-text">{{ "يعمل" if state.is_running else "متوقف" }}</span>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- الوكلاء -->
+        <div class="card">
+            <div class="card-title">الوكلاء (Agents)</div>
+            <div class="agents" id="agents">
+                {% for name, status in state.agents_status.items() %}
+                <div class="agent {% if status == 'LIVE' %}live{% endif %}">
+                    <span>{{ name }}</span>
+                    <div style="display:flex;align-items:center;gap:6px">
+                        <div class="dot {% if status == 'LIVE' %}blue{% elif status == 'متوقف' %}red{% endif %}"></div>
+                        <span style="font-size:12px">{{ status }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <button class="btn btn-start" id="startBtn" onclick="startBot()" {% if state.is_running %}style="display:none"{% endif %}>
+                تشغيل التداول التجريبي
+            </button>
+            <button class="btn btn-stop" id="stopBtn" onclick="stopBot()" {% if not state.is_running %}style="display:none"{% endif %}>
+                إيقاف المحرك
+            </button>
+            
+            <button class="btn emergency" onclick="stopBot()">
+                ⚠ إيقاف الطوارئ
+            </button>
+        </div>
+
+        <!-- الوسط -->
+        <div class="card">
+            <div class="card-title">الزوج الحالي</div>
+            <div class="pair-price">
+                BTC/USDT
+                <div style="font-size:16px;color:#9ca3af" id="price">{{ "%.2f"|format(state.current_price) }}</div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-box">
+                    <div style="font-size:12px;color:#9ca3af">الرصيد المتاح</div>
+                    <div class="stat-value" id="available">{{ "%.2f"|format(state.available) }}</div>
+                </div>
+                <div class="stat-box">
+                    <div style="font-size:12px;color:#9ca3af">الأرباح المحققة</div>
+                    <div class="stat-value positive" id="pnl">{{ "%.2f"|format(state.realized_pnl) }}</div>
+                </div>
+                <div class="stat-box">
+                    <div style="font-size:12px;color:#9ca3af">الصفقات المفتوحة</div>
+                    <div class="stat-value" id="open">{{ state.open_trades|length }}</div>
+                </div>
+                <div class="stat-box">
+                    <div style="font-size:12px;color:#9ca3af">نسبة الفوز</div>
+                    <div class="stat-value" id="winrate">{{ state.win_rate }}%</div>
+                </div>
+            </div>
+            
+            <div style="margin-top:16px">
+                <div class="card-title">الصفقات المفتوحة</div>
+                <div id="open-trades" style="font-size:13px;color:#9ca3af">
+                    {% if state.open_trades %}
+                        {% for t in state.open_trades %}
+                        <div style="padding:8px 0;border-bottom:1px solid #1f2937">
+                            {{ t.side }} {{ t.pair }} | دخول: {{ t.entry }} | {{ t.reason }}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        لا توجد صفقات مفتوحة
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- السجل -->
+        <div class="card">
+            <div class="card-title">سجل القرارات المباشر</div>
+            <div id="logs" style="max-height:400px;overflow-y:auto">
+                {% for log in state.live_log %}
+                <div class="log-item">
+                    <div class="log-time">{{ log.time }}</div>
+                    <div>
+                        <strong style="color:
+                        {% if log.action == 'ENTER' %}#34d399
+                        {% elif log.action == 'EXIT' %}#f87171
+                        {% else %}#60a5fa{% endif %}">
+                            {{ log.action }}
+                        </strong>
+                        {{ log.pair }} — {{ log.reason }}
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not state.live_log %}
+                <div style="color:#6b7280;text-align:center;padding:20px">لا توجد قرارات بعد</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function startBot() {
+            await fetch('/start', { method: 'POST' });
+            location.reload();
+        }
+        
+        async function stopBot() {
+            await fetch('/stop', { method: 'POST' });
+            location.reload();
+        }
+        
+        // تحديث تلقائي كل 5 ثواني
+        setInterval(async () => {
+            const res = await fetch('/api/state');
+            const data = await res.json();
+            
+            document.getElementById('balance').innerText = data.balance.toFixed(2) + ' ر.س';
+            document.getElementById('available').innerText = data.available.toFixed(2);
+            document.getElementById('pnl').innerText = data.realized_pnl.toFixed(2);
+            document.getElementById('open').innerText = data.open_trades.length;
+            document.getElementById('winrate').innerText = data.win_rate + '%';
+            document.getElementById('price').innerText = data.current_price.toFixed(2);
+            
+            const statusEl = document.getElementById('status');
+            const statusText = document.getElementById('status-text');
+            if (data.is_running) {
+                statusEl.classList.remove('offline');
+                statusText.innerText = 'يعمل';
+            } else {
+                statusEl.classList.add('offline');
+                statusText.innerText = 'متوقف';
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
