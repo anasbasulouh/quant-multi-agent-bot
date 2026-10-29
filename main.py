@@ -98,4 +98,4 @@ async def run_agents():
                 trade["exit_time"] = datetime.now().strftime("%H:%M:%S")
                 
                 state["closed_trades"].insert(0, trade)
-                state["realized_pnl"] = round(state["realized_pnl
+                state["realized_pnl"] = round(state["realized_pnl"], 2)
